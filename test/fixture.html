@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>VK Tracklist Search — тестовый стенд</title>
+  <style>
+    body { font: 14px/1.5 sans-serif; margin: 0; padding: 24px; }
+    [data-testid="post"] { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin: 0 0 20px; }
+    .spacer { width: 0; }
+    #result { white-space: pre-wrap; background: #f4f4f4; padding: 12px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Тестовый стенд</h1>
+  <p>Страница имитирует разметку постов VK, которую читает content script.</p>
+  <div id="posts"></div>
+  <pre id="result">pending</pre>
+
+  <script>
+    // --- шим chrome.storage для запуска content.js вне расширения -------
+    var params = new URLSearchParams(location.search);
+    window.__TEST__ = {
+      settings: {
+        enabled: params.get('enabled') !== '0',
+        requireMedia: params.get('media') !== '0',
+        queryEncoding: params.get('enc') === 'single' ? 'single' : 'double',
+        audioOwnerId: params.get('uid') || '123456789'
+      }
+    };
+    window.chrome = {
+      runtime: { id: 'test', lastError: null },
+      storage: {
+        sync: {
+          get: function (defaults, callback) {
+            callback(Object.assign({}, defaults, window.__TEST__.settings));
+          },
+          set: function (values, callback) {
+            window.__TEST__.saved = values;
+            if (callback) callback();
+          }
+        },
+        local: {
+          get: function (defaults, callback) { callback(defaults); },
+          set: function () {}
+        },
+        onChanged: { addListener: function () {} }
+      }
+    };
+
+    // --- треклист ASOT 1299 --------------------------------------------
+    var TRACKS = [
+      'Armin van Buuren – A State Of Trance 1299 (Guest Mix by MDDLTN) (15.10.2026)',
+      '',
+      '01 GXD & Elle Vee - Sail (Ginchy Remix)',
+      '02 Beatsole - Awaking',
+      '03 The KLF - What Time Is Love? (Paul Oakenfold & K-MRK Remix)',
+      '04 Grum - Stay With Me',
+      '05 R3HAB & ARTBAT - Dramma',
+      '',
+      'Progressive Pick:',
+      '06 Dan Sushi - Gravity',
+      '',
+      'Future Favorite:',
+      '07 Ruben de Ronde & York & Angel City & NRG2000 - Slip Away',
+      '',
+      '08 Skyvol & Edu Bravo - Ocean Sun',
+      '',
+      'Tune Of The Week:',
+      '09 Armin van Buuren & Omiki ft. Josh Cumbee - Sunny Days',
+      '',
+      '10 Rank 1 - Reuneyeted',
+      '11 Faouzia - Unethical (W&W Trance Mix)',
+      '12 dj try - Believe In More',
+      '13 Mark Sixma & Steve Dekay - 2 The Beat',
+      '14 onTune Presents Ontra - Fathers Love',
+      '15 SIKOTI - Into The Light',
+      '',
+      'Trending Track:',
+      '16 Armin van Buuren & Funk Tribu - Nirvana',
+      '',
+      '17 Alt1 - Play It Louder',
+      '18 Somewhen - Right There',
+      '',
+      'Service For Dreamers:',
+      '19 Above & Beyond pres. OceanLab - Satellite',
+      '',
+      'MDDLTN played:',
+      '',
+      '20 MDDLTN & Liam Wilson - Inside My Soul',
+      '21 dj try & DJ WIFI - Bringing It Back',
+      '22 Yomanda - Sunshine (MDDLTN Remix)',
+      '23 DJ Kim - Jetlag (MDDLTN Remix)',
+      '24 Tyler Jack & MDDLTN - Something For Your Mind',
+      '25 DJ Dings & Tim Rausch - Office Romance',
+      '26 MDDLTN - Feel It',
+      '27 DJ Dings & Tim Rausch - Play It Loud (Keep It Going)',
+      "28 Olly James & Panteros666 & Evil Twiin - Berlin '99",
+      '29 JOR - Have The Power',
+      '30 SIKOTI - Fall Back Into You',
+      '31 Marie Vaunt & Olly James & MDDLTN & Nico La Nova - Cooked',
+      '32 KUKO - Voicemail (Tiësto Remix)',
+      '33 Ueberrest - Disturbing Paradise',
+      "34 t e s t p r e s s - losing control (can't escape)",
+      '35 JOR - TILL SUNRISE',
+      '36 Armin van Buuren ft. Sharon Den Adel - In And Out Of Love (Ben Hemsley Remix)',
+      '37 Everything But The Girl - Missing (Will Atkinson Bootleg)'
+    ];
+
+    // Строки-«абзацы» VK: текст, <br> между строками, div нулевой ширины
+    // с <br> на пустых строках.
+    function tracklistHtml() {
+      var html = '';
+      for (var i = 0; i < TRACKS.length; i++) {
+        var line = TRACKS[i];
+        if (!line) {
+          html += '<div class="spacer" style="width: 0px;"><br> </div>';
+          continue;
+        }
+        if (i === 0) {
+          html += '<a href="/club22744062" data-testid="post-text-mention">Armin van Buuren</a>' +
+            ' – A State Of Trance 1299 (Guest Mix by MDDLTN) (15.10.2026)';
+        } else {
+          html += line;
+        }
+        if (i + 1 < TRACKS.length && TRACKS[i + 1] !== '') html += '<br>';
+      }
+      return html;
+    }
+
+    function linesHtml(lines) {
+      var html = '';
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+        if (!line) {
+          html += '<div class="spacer" style="width: 0px;"><br> </div>';
+          continue;
+        }
+        html += line;
+        if (i + 1 < lines.length && lines[i + 1] !== '') html += '<br>';
+      }
+      return html;
+    }
+
+    function postHtml(id, bodyHtml, mediaHtml) {
+      return '<div data-testid="post" data-post-id="' + id + '">' +
+        '<div data-testid="post-content-container">' +
+        '<div><div><span data-testid="post_text" data-post-id="' + id + '">' +
+        '<div data-testid="showmoretext">' +
+        '<div data-testid="showmoretext-in-expanded">' +
+        '<div class="text-body">' + bodyHtml + '</div>' +
+        '</div></div></span></div></div>' +
+        '<div class="attachments">' + (mediaHtml || '') + '</div>' +
+        '</div></div>';
+    }
+
+    var MUSIC_BADGE =
+      '<div data-testid="primary-attachment-photo">' +
+      '<div data-testid="music-track-overlay-badge">' +
+      '<span>Armin van Buuren — A State Of Trance 1299</span>' +
+      '</div></div>';
+
+    var PHOTO_ONLY = '<div data-testid="primary-attachment-photo"><img alt="" src="data:,"></div>';
+    var VIDEO = '<video controls src="data:,"></video>';
+
+    var SHORT_TRACKLIST = [
+      '01 Grum - Stay With Me',
+      '02 Beatsole - Awaking',
+      '03 SIKOTI - Into The Light'
+    ].join('<br>');
+
+    var NUMBERED_LIST = [
+      '01 Подготовка выпуска',
+      '02 Сведение',
+      '03 Публикация'
+    ].join('<br>');
+
+    var UNNUMBERED = [
+      'Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)',
+      '',
+      'Tracklist:',
+      '',
+      'Molac, Plecta - Zenith (Original Mix)',
+      'Tonecast - Radiance (Patch Park Edit)',
+      'Maze 28 - Deceptions (EMPHI Remix)',
+      'Maksim Dark - Mantrap (Original Mix)',
+      'Andres Marquez - Case (Original Mix)',
+      'Booka Shade - Your Command (Pig&Dan Remix)',
+      'Maksim Dark - Underpulse (Original Mix)',
+      'Helsloot - Fledermaus (Extended Mix)',
+      'Spencer Brown - Plane Acid (Original Mix)',
+      'Alessio Cristiano - Blessing (Original Mix)',
+      'Masaaki, Anonimat - Behind Lies (Original Mix)',
+      'Dave Walker - Kamino (Original Mix)',
+      'Solvane, Prismode - Zeus (Nihil Young Remix)',
+      'Guy J - Alive Again (Original Mix)',
+      'Mayro - Objective (Agustin Pietrocola Extended Remix)',
+      'Shane Patrick Riley - Juggernaut (Original Mix)',
+      "Funk D'Void - Diabla (Christian Smith & Wehbba Remix)",
+      'SNYL, David LeSal - I Remember Those Nights (Original Mix)',
+      'Elias Erium - ID',
+      'Gonzalo Cotroneo - Illuminated Paths (Extended Mix)',
+      'Christopher Erre, Greta Meier - Osiris (Mayro Remix)',
+      'Martin Di Sciascio - Lost in Burzako (Original Mix)',
+      'Dilby, SNGI - Lift Up (Extended Mix)',
+      'Betoko - Trouble in Paradise (Original Mix)',
+      "Christian Smith - L'Amour Toujours (Original Mix)"
+    ];
+
+    var UNNUMBERED_RUN = [
+      'Molac, Plecta - Zenith (Original Mix)',
+      'Tonecast - Radiance (Patch Park Edit)',
+      'Maze 28 - Deceptions (EMPHI Remix)',
+      'Maksim Dark - Mantrap (Original Mix)',
+      'Andres Marquez - Case (Original Mix)',
+      'Booka Shade - Your Command (Pig&Dan Remix)'
+    ];
+
+    document.getElementById('posts').innerHTML =
+      postHtml('media-post', tracklistHtml(), MUSIC_BADGE) +
+      postHtml('nomedia-post', tracklistHtml(), '') +
+      postHtml('photo-post', tracklistHtml(), PHOTO_ONLY) +
+      postHtml('video-post', SHORT_TRACKLIST, VIDEO) +
+      postHtml('list-post', NUMBERED_LIST, MUSIC_BADGE) +
+      postHtml('short-post', '01 Grum - Stay With Me<br>02 Beatsole - Awaking', MUSIC_BADGE) +
+      postHtml('unnumbered-post', linesHtml(UNNUMBERED), MUSIC_BADGE) +
+      postHtml('unnumbered-run-post', linesHtml(UNNUMBERED_RUN), VIDEO) +
+      postHtml('unnumbered-short-post', linesHtml(UNNUMBERED_RUN.slice(0, 3)), MUSIC_BADGE) +
+      postHtml(
+        'unnumbered-title-post',
+        linesHtml(['Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)', ''].concat(UNNUMBERED_RUN)),
+        VIDEO
+      );
+  </script>
+
+  <script src="../extension/common.js"></script>
+  <script src="../extension/content.js"></script>
+
+  <script>
+    setTimeout(function () {
+      var api = window.__vktTracklistSearch || {};
+      var posts = {};
+
+      document.querySelectorAll('[data-testid="post"]').forEach(function (post) {
+        var id = post.getAttribute('data-post-id');
+        var buttons = Array.prototype.slice.call(post.querySelectorAll('a.vkt-track-search-btn'));
+        posts[id] = {
+          count: buttons.length,
+          hrefs: buttons.map(function (button) { return button.getAttribute('href'); }),
+          queries: buttons.map(function (button) { return button.getAttribute('data-vkt-query'); }),
+          placements: buttons.slice(0, 2).concat(buttons.slice(-1)).map(function (button) {
+            var prev = button.previousSibling;
+            return {
+              text: prev && prev.nodeType === 3 ? prev.nodeValue.trim() : null,
+              inPostText: !!button.closest('[data-testid="post_text"]')
+            };
+          })
+        };
+      });
+
+      var parseSamples = [
+        ['04 Grum - Stay With Me', 'Grum - Stay With Me'],
+        ['1. Artist – Title', 'Artist – Title'],
+        ['[00:12] 03 Artist - Title (Remix)', 'Artist - Title (Remix)'],
+        ['01.Artist - Title', 'Artist - Title'],
+        ['37 Everything But The Girl - Missing (Will Atkinson Bootleg)', 'Everything But The Girl - Missing (Will Atkinson Bootleg)'],
+        ["34 t e s t p r e s s - losing control (can't escape)", "t e s t p r e s s - losing control (can't escape)"],
+        ['2024 - итоги года', null],
+        ['01 Progressive Pick:', null],
+        ['01 Play It Loud (Keep It Going)', null]
+      ];
+      var parse = parseSamples.map(function (sample) {
+        var parsed = api.parse ? api.parse(sample[0]) : null;
+        return {
+          line: sample[0],
+          expected: sample[1],
+          got: parsed ? parsed.query : null,
+          ok: (parsed ? parsed.query : null) === sample[1]
+        };
+      });
+
+      var looseSamples = [
+        ['Molac, Plecta - Zenith (Original Mix)', true],
+        ['Tracklist:', false],
+        ['Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)', true],
+        ['2024 - итоги года', false],
+        ['https://example.com/a - b', false]
+      ];
+      var loose = looseSamples.map(function (sample) {
+        var parsed = api.parseLoose ? api.parseLoose(sample[0]) : null;
+        return {
+          line: sample[0],
+          expected: sample[1],
+          got: !!parsed,
+          ok: !!parsed === sample[1]
+        };
+      });
+
+      document.getElementById('result').textContent = JSON.stringify({
+        version: api.version || null,
+        disabledClass: document.documentElement.classList.contains('vkt-tracklist-disabled'),
+        posts: posts,
+        parse: parse,
+        loose: loose
+      }, null, 2);
+      document.title = 'VKT_DONE';
+    }, 1500);
+  </script>
+</body>
+</html>

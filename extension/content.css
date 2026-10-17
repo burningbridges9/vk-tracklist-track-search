@@ -1,0 +1,53 @@
+/* Кнопка поиска трека, которая добавляется в конце строки треклиста. */
+a.vkt-track-search-btn {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 0 0 0 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--vkui--color_icon_secondary, #818c99) !important;
+  font: inherit;
+  line-height: 1;
+  vertical-align: -3px;
+  text-decoration: none !important;
+  cursor: pointer;
+  opacity: 0.55;
+  flex: none;
+  position: relative;
+  z-index: 1;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: opacity 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+a.vkt-track-search-btn > svg {
+  display: block;
+  pointer-events: none;
+}
+
+a.vkt-track-search-btn:hover,
+a.vkt-track-search-btn:focus-visible {
+  opacity: 1;
+  color: var(--vkui--color_icon_accent, #2688eb) !important;
+  background: var(--vkui--color_transparent--hover, rgba(0, 0, 0, 0.06));
+}
+
+a.vkt-track-search-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(38, 136, 235, 0.35);
+}
+
+a.vkt-track-search-btn:active {
+  opacity: 0.8;
+}
+
+html.vkt-tracklist-disabled a.vkt-track-search-btn {
+  display: none !important;
+}

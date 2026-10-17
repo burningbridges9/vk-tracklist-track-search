@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VK Tracklist Search — настройки</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+          <circle cx="10.5" cy="10.5" r="6.2" stroke="currentColor" stroke-width="2.2"></circle>
+          <path d="M15.2 15.2 20 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"></path>
+        </svg>
+      </div>
+      <div>
+        <h1>VK Tracklist Search</h1>
+        <p class="sub">Кнопка поиска трека рядом с каждой строкой треклиста в постах VK.</p>
+      </div>
+    </header>
+
+    <form id="settings" class="card" autocomplete="off">
+      <div class="row">
+        <label class="text" for="enabled">
+          <span class="label">Расширение включено</span>
+          <span class="hint">Выключите, чтобы убрать все кнопки и остановить обработку страниц.</span>
+        </label>
+        <input class="switch" type="checkbox" id="enabled">
+      </div>
+
+      <div class="row">
+        <label class="text" for="requireMedia">
+          <span class="label">Только посты с аудио или видео</span>
+          <span class="hint">Главное условие: кнопки появляются, только если в посте есть аудио- или видеовложение. Так случайные нумерованные списки не превращаются в поиск треков.</span>
+        </label>
+        <input class="switch" type="checkbox" id="requireMedia">
+      </div>
+
+      <div class="row">
+        <label class="text" for="minTracks">
+          <span class="label">Минимум строк в треклисте</span>
+          <span class="hint">Сколько строк «исполнитель — название» должно найтись в посте. Нумерованные строки считаются всегда; треклист без номеров с заголовком «Tracklist:» — по этому же порогу, а без заголовка — от 5 строк подряд.</span>
+        </label>
+        <input class="number" type="number" id="minTracks" min="1" max="50" step="1" inputmode="numeric">
+      </div>
+
+      <div class="row">
+        <label class="text" for="openInNewTab">
+          <span class="label">Открывать поиск в новой вкладке</span>
+          <span class="hint">Если выключить, поиск откроется в текущей вкладке (средний клик и Ctrl+клик всё равно работают как обычно).</span>
+        </label>
+        <input class="switch" type="checkbox" id="openInNewTab">
+      </div>
+
+      <div class="row">
+        <label class="text" for="queryEncoding">
+          <span class="label">Кодирование запроса</span>
+          <span class="hint">VK кодирует параметр поиска дважды, поэтому пробел в адресе выглядит как %2520. Если поиск открывается с «%20» в строке запроса, выберите обычное кодирование.</span>
+        </label>
+        <select class="select" id="queryEncoding">
+          <option value="double">Двойное (%2520) — как в VK</option>
+          <option value="single">Обычное (%20)</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <label class="text" for="audioOwnerId">
+          <span class="label">ID владельца аудио</span>
+          <span class="hint">Число из адреса вашей музыки: vk.ru/audios<strong>123456789</strong>. Обычно определяется автоматически — можно оставить пустым.</span>
+        </label>
+        <input class="text-input" type="text" id="audioOwnerId" inputmode="numeric" placeholder="например, 123456789">
+      </div>
+
+      <p class="detected" id="detected"></p>
+
+      <div class="actions">
+        <button type="button" class="btn" id="reset">Сбросить настройки</button>
+        <span class="status" id="status" role="status"></span>
+      </div>
+    </form>
+
+    <section class="card">
+      <h2>Пример ссылки</h2>
+      <p class="hint">Для строки «04 Grum - Stay With Me» расширение открывает:</p>
+      <code id="preview" class="preview"></code>
+    </section>
+
+    <details class="card how">
+      <summary>Как это работает</summary>
+      <ul>
+        <li>Расширение читает текст постов на vk.ru и находит строки «исполнитель — название»: с номером (<code>04 Grum - Stay With Me</code>) или без него, если выше стоит заголовок <code>Tracklist:</code>, <code>Треклист:</code> или <code>Playlist:</code>.</li>
+        <li>Если в посте есть аудио или видео и найдено достаточно строк, в конце каждой строки появляется кнопка <span class="inline-icon" aria-hidden="true">⌕</span>.</li>
+        <li>Кнопка открывает <code>https://vk.ru/audios&lt;id&gt;?q=…</code> — страницу вашей музыки с уже заполненным поиском.</li>
+        <li>Если ID ещё не определён, расширение использует адрес <code>https://vk.ru/audios?q=…</code> и запоминает ID, как только вы откроете свою страницу музыки.</li>
+        <li>Работает и на vk.ru, и на vk.com. После установки обновите открытую вкладку VK.</li>
+      </ul>
+    </details>
+
+    <footer class="foot">
+      <span>Версия <span id="version">1.1.0</span></span>
+      <a href="https://vk.ru/audios" target="_blank" rel="noopener noreferrer">Открыть мою музыку</a>
+    </footer>
+  </main>
+
+  <script src="common.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

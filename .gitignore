@@ -1,0 +1,12 @@
+# Build artifacts
+dist/
+
+# Installed test dependencies (jsdom) and pnpm stores
+test/.deps/node_modules/
+test/.deps/.pnpm-store/
+.pnpm-store/
+node_modules/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
