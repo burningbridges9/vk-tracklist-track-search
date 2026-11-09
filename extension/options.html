@@ -41,7 +41,7 @@
       <div class="row">
         <label class="text" for="minTracks">
           <span class="label">Минимум строк в треклисте</span>
-          <span class="hint">Сколько строк «исполнитель — название» должно найтись в посте. Нумерованные строки считаются всегда; треклист без номеров с заголовком «Tracklist:» — по этому же порогу, а без заголовка — от 5 строк подряд.</span>
+          <span class="hint">Сколько строк «исполнитель — название» должно найтись в посте. Нумерованные строки и строки с таймкодами считаются всегда; треклист без номеров с заголовком «Tracklist:» — по этому же порогу, а без заголовка — от 5 строк подряд.</span>
         </label>
         <input class="number" type="number" id="minTracks" min="1" max="50" step="1" inputmode="numeric">
       </div>
@@ -90,7 +90,7 @@
     <details class="card how">
       <summary>Как это работает</summary>
       <ul>
-        <li>Расширение читает текст постов на vk.ru и находит строки «исполнитель — название»: с номером (<code>04 Grum - Stay With Me</code>) или без него, если выше стоит заголовок <code>Tracklist:</code>, <code>Треклист:</code> или <code>Playlist:</code>.</li>
+        <li>Расширение читает текст постов на vk.ru и находит строки «исполнитель — название»: с номером (<code>04 Grum - Stay With Me</code>), с таймкодом (<code>[69:56] Matt Fax - To The Ground</code>) или без номера, если выше стоит заголовок <code>Tracklist:</code>, <code>Треклист:</code> или <code>Playlist:</code>.</li>
         <li>Если в посте есть аудио или видео и найдено достаточно строк, в конце каждой строки появляется кнопка <span class="inline-icon" aria-hidden="true">⌕</span>.</li>
         <li>Кнопка открывает <code>https://vk.ru/audios&lt;id&gt;?q=…</code> — страницу вашей музыки с уже заполненным поиском.</li>
         <li>Если ID ещё не определён, расширение использует адрес <code>https://vk.ru/audios?q=…</code> и запоминает ID, как только вы откроете свою страницу музыки.</li>
@@ -99,7 +99,7 @@
     </details>
 
     <footer class="foot">
-      <span>Версия <span id="version">1.1.0</span></span>
+      <span>Версия <span id="version">1.2.0</span></span>
       <a href="https://vk.ru/audios" target="_blank" rel="noopener noreferrer">Открыть мою музыку</a>
     </footer>
   </main>

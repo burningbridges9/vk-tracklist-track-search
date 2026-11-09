@@ -119,7 +119,7 @@
     scheduleSave();
   }
 
-  els.version.textContent = (window.VKT && window.VKT.VERSION) || '1.1.0';
+  els.version.textContent = (window.VKT && window.VKT.VERSION) || '1.2.0';
 
   els.audioOwnerId.addEventListener('input', function () {
     var cleaned = this.value.replace(/\D/g, '').slice(0, 20);

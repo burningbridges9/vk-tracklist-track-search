@@ -215,6 +215,54 @@
       'Booka Shade - Your Command (Pig&Dan Remix)'
     ];
 
+    var TIMESTAMPED = [
+      'Armin van Buuren – A State Of Trance 1302 (Residency Mix by Ferry Corsten) (05.11.2026)',
+      '',
+      '[02:00] ALPHA 9 - This Is Out Time (Dreamstate 2026 Anthem)',
+      '[05:35] Vincent de Moor - Green Heaven (Hodel Rework Mix)',
+      '[09:09] Mark Reeve - Far Away 2026',
+      '[12:44] Helslowed - Let It All Blur',
+      '[16:18] Station2station & Blue Mora - The Monkey Vibe',
+      '[19:53] Ginchy - Who Do You Love Now',
+      '',
+      'Tune Of The Week:',
+      '[23:27] Armin van Buuren & Douwe Bob - What If I Told You (Rising Star Remix)',
+      '',
+      '[27:02] River & Deveraux - Empathy',
+      '',
+      'Future Favorite:',
+      '[30:36] Armin van Buuren - Into The Unknown (ASOT 2027 Official Anthem)',
+      '',
+      '[34:11] Benwal & Freddi - Take My Hand',
+      '[37:45] DJ Try - Feel The Heat',
+      '[41:20] Sneijder & Saltwater - The Legacy',
+      '[44:55] XiJaro & Pitch ft. Brittany Egbert - Echoes',
+      '[48:29] Binary Finary & DuMonde - 1998',
+      '[52:04] Nu NRG - The Moon Loves The Sun (Sean Tyas Remix)',
+      '[55:38] Mark Sixma & Steve Dekay - 2 The Beat',
+      '[59:13] Funk Tribu - Voodoo',
+      '[62:47] SIKOTI - Into The Light',
+      '',
+      'Service For Dreamers:',
+      '[66:22] Ben Gold - The City Sleeps Tonight',
+      '',
+      'Ferry Corsten played:',
+      '[69:56] Matt Fax - To The Ground (Helsloot Remix)',
+      '[73:31] John Grand - The Divide',
+      '[77:05] Kevin de Vries & Juan Elvadin - Obsidian',
+      '[80:40] DJ COSMIC DREAM & SONIN - Free',
+      '[84:15] SONIN & Orkidea - Avril',
+      '[87:49] Nitrous Oxide - Launch Control',
+      '[91:24] Ferry Corsten & Eddo Brandwijk - Oh How I Miss You (Clubmix)',
+      '[94:58] DJ HEARTSTRING & Spriitzz - Sentimental Ultra',
+      '[98:33] Lostly - Submission',
+      '[102:07] DJ Try & Solare - Believe In More',
+      '[105:42] NRG2000 & ATN - Miss A Day',
+      '[109:16] Tai Woffinden & SUPERSTRINGS - Latitude 38.9',
+      '[112:51] Ferry Corsten, Ruben de Ronde & NRG2000 - Rise Up',
+      '[116:25] Ferry Corsten - Persiste'
+    ];
+
     document.getElementById('posts').innerHTML =
       postHtml('media-post', tracklistHtml(), MUSIC_BADGE) +
       postHtml('nomedia-post', tracklistHtml(), '') +
@@ -229,7 +277,8 @@
         'unnumbered-title-post',
         linesHtml(['Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)', ''].concat(UNNUMBERED_RUN)),
         VIDEO
-      );
+      ) +
+      postHtml('timestamp-post', linesHtml(TIMESTAMPED), MUSIC_BADGE);
   </script>
 
   <script src="../extension/common.js"></script>
@@ -279,19 +328,22 @@
       });
 
       var looseSamples = [
-        ['Molac, Plecta - Zenith (Original Mix)', true],
-        ['Tracklist:', false],
-        ['Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)', true],
-        ['2024 - итоги года', false],
-        ['https://example.com/a - b', false]
+        ['Molac, Plecta - Zenith (Original Mix)', 'Molac, Plecta - Zenith (Original Mix)'],
+        ['Tracklist:', null],
+        ['Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)', 'Elias Erium - The Outer Experience 063 (Live from Stereo, Part 2)'],
+        ['2024 - итоги года', null],
+        ['https://example.com/a - b', null],
+        ['[69:56] Matt Fax - To The Ground (Helsloot Remix)', 'Matt Fax - To The Ground (Helsloot Remix)'],
+        ['[116:25] Ferry Corsten - Persiste', 'Ferry Corsten - Persiste']
       ];
       var loose = looseSamples.map(function (sample) {
         var parsed = api.parseLoose ? api.parseLoose(sample[0]) : null;
+        var got = parsed ? parsed.query : null;
         return {
           line: sample[0],
           expected: sample[1],
-          got: !!parsed,
-          ok: !!parsed === sample[1]
+          got: got,
+          ok: got === sample[1]
         };
       });
 

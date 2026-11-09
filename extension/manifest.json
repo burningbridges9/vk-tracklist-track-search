@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "VK Tracklist Search",
   "short_name": "VK Tracklist",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Добавляет кнопку поиска трека рядом с каждой строкой треклиста в постах VK.",
   "permissions": ["storage"],
   "host_permissions": ["https://vk.ru/*", "https://vk.com/*"],

@@ -209,7 +209,10 @@
 
   // Строка вида «01 GXD & Elle Vee - Sail (Ginchy Remix)», «1. Artist - Title»,
   // «[00:12] 03 Artist – Title». Возвращает запрос без номера трека.
-  var TRACK_LINE_RE = /^(?:\[\d{1,2}:\d{2}(?::\d{2})?\]\s*)?(\d{1,3})(?!\d)\s*[.)\]]?\s*(?:[-–—]\s+)?(.+)$/;
+  var TRACK_LINE_RE = /^(?:\[\d{1,3}:\d{2}(?::\d{2})?\]\s*)?(\d{1,3})(?!\d)\s*[.)\]]?\s*(?:[-–—]\s+)?(.+)$/;
+
+  // Таймкод в начале строки: «[69:56] ...».
+  var TIMESTAMP_RE = /^\[\d{1,3}:\d{2}(?::\d{2})?\]\s*/;
 
   function splitArtistTitle(text) {
     var split = /^(.+?)\s+[-–—]\s+(.+)$/.exec(text) ||
@@ -247,13 +250,38 @@
   }
 
   // Ненумерованная строка треклиста: «Molac, Plecta - Zenith (Original Mix)».
+  // Таймкод в начале отбрасывается, чтобы он не попадал в поисковый запрос.
   function parseLooseTrack(raw) {
-    var text = normalizeText(raw);
+    var text = normalizeText(raw).replace(TIMESTAMP_RE, '').trim();
     if (!text || text.length > 300) return null;
     if (/^https?:\/\//i.test(text)) return null;
     if (isTracklistHeader(text)) return null;
     if (!splitArtistTitle(text)) return null;
     return { query: text };
+  }
+
+  // Строка с таймкодом: «[69:56] Matt Fax - To The Ground (Helsloot Remix)».
+  function parseTimestampedTrack(raw) {
+    var text = normalizeText(raw);
+    if (!TIMESTAMP_RE.test(text)) return null;
+    var rest = text.replace(TIMESTAMP_RE, '').trim();
+    if (!rest) return null;
+    if (!splitArtistTitle(rest)) return null;
+    return { query: rest };
+  }
+
+  function collectTimestampedTracks(lines) {
+    var tracks = [];
+    for (var i = 0; i < lines.length; i++) {
+      var parsed = parseTimestampedTrack(lines[i].text);
+      if (!parsed) continue;
+      tracks.push({
+        query: parsed.query,
+        anchor: lines[i].anchor,
+        lastTextNode: lines[i].lastTextNode
+      });
+    }
+    return tracks;
   }
 
   function parseTrackCandidate(raw) {
@@ -265,9 +293,10 @@
   }
 
   /**
-   * Треклист без номеров. Сначала ищем заголовок «Tracklist:» и берём строки
-   * после него; если заголовка нет — самый длинный непрерывный блок строк
-   * «исполнитель — название» (не короче 5 строк).
+   * Треклист без номеров. Порядок:
+   * 1) строки после заголовка «Tracklist:» / «Треклист:»;
+   * 2) все строки с таймкодами «[69:56] Artist - Title»;
+   * 3) все непрерывные блоки «исполнитель — название» от 5 строк.
    */
   function collectUnnumberedTracks(lines) {
     for (var h = lines.length - 1; h >= 0; h--) {
@@ -289,11 +318,16 @@
       if (block.length >= settings.minTracks) return block;
     }
 
-    var best = [];
+    // Таймкоды не зависят от абзацев и заголовков: в посте могут быть
+    // блоки «Tune Of The Week», «Ferry Corsten played» и т.п.
+    var stamped = collectTimestampedTracks(lines);
+    if (stamped.length >= settings.minTracks) return stamped;
+
     var current = [];
+    var runs = [];
 
     function flushRun() {
-      if (current.length > best.length) best = current.slice();
+      if (current.length) runs.push(current);
       current = [];
     }
 
@@ -312,8 +346,14 @@
     }
     flushRun();
 
-    if (best.length >= Math.max(settings.minTracks, 5)) return best;
-    return [];
+    // Несколько абзацев треклиста не должны теряться: берём все блоки,
+    // в которых набралось достаточно строк.
+    var threshold = Math.max(settings.minTracks, 5);
+    var result = [];
+    for (var r = 0; r < runs.length; r++) {
+      if (runs[r].length >= threshold) result = result.concat(runs[r]);
+    }
+    return result;
   }
 
   // Если <br> лежит внутри служебного div нулевой ширины (разделитель абзацев
@@ -686,7 +726,7 @@
   // расширения и не виден странице). Используется тестами.
   try {
     window.__vktTracklistSearch = {
-      version: '1.1.0',
+      version: '1.2.0',
       parse: parseTrackLine,
       parseLoose: parseLooseTrack,
       isHeader: isTracklistHeader,

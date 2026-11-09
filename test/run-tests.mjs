@@ -141,7 +141,7 @@ async function main() {
     const { result, errors } = await load('?uid=123456789');
 
     check('нет ошибок на странице', errors.length === 0, errors);
-    check('версия content script', result.version === '1.1.0', result.version);
+    check('версия content script', result.version === '1.2.0', result.version);
 
     check('треклист с аудио — 37 кнопок', result.posts['media-post'].count === 37, countsOf(result));
     check('треклист без вложений — 0 кнопок', result.posts['nomedia-post'].count === 0);
@@ -186,6 +186,36 @@ async function main() {
       'разбор ненумерованных строк',
       result.loose.every((sample) => sample.ok),
       result.loose.filter((sample) => !sample.ok)
+    );
+
+    check(
+      'треклист с таймкодами — 33 кнопки',
+      result.posts['timestamp-post'].count === 33,
+      countsOf(result)
+    );
+    check(
+      'таймкод не попадает в запрос',
+      result.posts['timestamp-post'].queries[0] ===
+        'ALPHA 9 - This Is Out Time (Dreamstate 2026 Anthem)',
+      result.posts['timestamp-post'].queries[0]
+    );
+    check(
+      'трек после метки «Ferry Corsten played»',
+      result.posts['timestamp-post'].queries.includes('Matt Fax - To The Ground (Helsloot Remix)'),
+      result.posts['timestamp-post'].queries.filter((query) => query.indexOf('Matt Fax') !== -1)
+    );
+    check(
+      'в ссылках нет закодированных таймкодов',
+      result.posts['timestamp-post'].hrefs.every((href) => href.indexOf('%255B') === -1),
+      result.posts['timestamp-post'].hrefs.filter((href) => href.indexOf('%255B') !== -1)
+    );
+
+    const timestampPlacements = result.posts['timestamp-post'].placements;
+    check(
+      'кнопка в конце первой строки с таймкодом',
+      timestampPlacements[0].text &&
+        timestampPlacements[0].text.endsWith('Dreamstate 2026 Anthem)'),
+      timestampPlacements[0]
     );
 
     const hrefs = result.posts['media-post'].hrefs;
@@ -244,6 +274,7 @@ async function main() {
     check('пост с фото — 37 кнопок', result.posts['photo-post'].count === 37);
     check('нумерованный список — 0 кнопок', result.posts['list-post'].count === 0);
     check('ненумерованный треклист — 25 кнопок', result.posts['unnumbered-post'].count === 25);
+    check('треклист с таймкодами — 33 кнопки', result.posts['timestamp-post'].count === 33);
   }
 
   console.log('\n[3] Выключенное расширение (enabled=0)');
@@ -269,7 +300,7 @@ async function main() {
   {
     const manifest = JSON.parse(readFileSync(path.join(EXTENSION, 'manifest.json'), 'utf8'));
     check('manifest_version = 3', manifest.manifest_version === 3);
-    check('версия 1.1.0', manifest.version === '1.1.0', manifest.version);
+    check('версия 1.2.0', manifest.version === '1.2.0', manifest.version);
 
     const referenced = [
       manifest.background.service_worker,
@@ -307,7 +338,7 @@ async function main() {
       'определённый ID показан в подсказке',
       document.getElementById('detected').textContent.indexOf('123456789') !== -1
     );
-    check('версия на странице', document.getElementById('version').textContent === '1.1.0');
+    check('версия на странице', document.getElementById('version').textContent === '1.2.0');
 
     const enabled = document.getElementById('enabled');
     enabled.checked = false;

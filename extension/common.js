@@ -16,5 +16,5 @@
 
   window.VKT = window.VKT || {};
   window.VKT.DEFAULTS = DEFAULTS;
-  window.VKT.VERSION = '1.1.0';
+  window.VKT.VERSION = '1.2.0';
 })();
